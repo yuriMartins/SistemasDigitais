@@ -1,0 +1,12 @@
+if (func == 0x20)
+    {
+        printf("add\n");
+        registers[rd] = temp_rs + temp_rt;
+
+        flags[F_OVERFLOW] = sum_check_overflow(temp_rs, temp_rt, registers[rd]);
+        flags[F_CARRY] = check_carry(temp_rs, temp_rt);
+        flags[F_ZERO] = (registers[rd] == 0);
+        flags[F_TRUE] = (registers[rd] != 0);
+        flags[F_NEGZERO] = (registers[rd] <= 0);
+        flags[F_NEG] = (registers[rd] < 0);
+    }
