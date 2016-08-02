@@ -6,14 +6,14 @@
 .pseg
 			lcl r10, LOWBYTE ARR1
         	lch r10, HIGHBYTE ARR1
-			loadlit r3, 5 ; n-ésimo numero de fibonacci
+			li r3, 5 ; n-ésimo numero de fibonacci
 			;inca r10,r10 ;aponta para o primeiro elemento do array
-			loadlit r1, 1 ; inicializa os termos
-			loadlit r2, 1
-			loadlit r0, 2 ; inicializa o contador do loop
-			store r10,r1 ; salva o primeiro termo
-			inca r10,r10 ; incrementa o index do array
-			store r10,r2 ; salva o segundo termo
+			li r1, 1 ; inicializa os termos
+			li r2, 1
+			li r0, 2 ; inicializa o contador do loop
+			move r10,r1 ; salva o primeiro termo * mudei até aqui.*
+			inca r10,r10 ; incrementa o index do array 
+			move r10,r2 ; salva o segundo termo
 			zeros r7    ; para verificação do if
 LOOP:
 			add r4,r1,r2 ; r4 e um registrador auxiliar
