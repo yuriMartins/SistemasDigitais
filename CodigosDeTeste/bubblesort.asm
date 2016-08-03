@@ -5,12 +5,12 @@
 
  		lcl r0,LOWBYTE ARR1
         lch r0,HIGHBYTE ARR1
-        loadlit r5,5	;r5 tem o tamanho do array
+        li r5,5	;r5 tem o tamanho do array
        	;zeros r1 ; index do primeiro loop e zero
 		zeros r7 ; sempre 0, utilizado para os ifs
-		loadlit r8,1 ; sempre 1 para comparação
-		deca r3, r5; numero de elementos menos 1
-		passa r1, r3;
+		li r8,1 ; sempre 1 para comparação
+		subu r3, r5, r8; numero de elementos menos 1
+		move r1, r3;
 	   	LOOP1:
 				zeros r2 ; index do segundo loop e zero
 				LOOP2:
