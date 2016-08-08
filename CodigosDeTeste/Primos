@@ -25,6 +25,7 @@ sw $t0,0($s1)           # salva t0 em array[s1/4]
 addi $s1,$s1,4          # s1 = s1 + 4
 beq $s1,$s2,exit        # if (s1 == s2) goto exit, se s1 possui endereco do final de "array", finalize
 j loop1                 # goto loop1
+
 skip: div $t0,$t1       # lo = t0/t1, hi = t0%t1
 mfhi $t3                # t3 = hi
 bne $t3,$0,loop2        # if (t3 != 0) goto loop2
