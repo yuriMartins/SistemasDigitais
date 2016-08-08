@@ -1,20 +1,12 @@
-﻿# kkamin8
-# MIPS fibonacci
-
+﻿.module fibonacci
 .data
-msg1: .asciiz "Enter n: "
-msg2: .asciiz "th Fibonacci is: "
 
-.text
-    # ask user for the input
-    li          $v0, 4
-    la          $a0, msg1
-    syscall
-    li          $v0, 5
-    syscall
+.pseg
+    
+    li          $v0, 5 //valor a ser fibonacciado
     move        $s1, $v0
 
-    # decrement $v0 since 1st fibonacci is f(0) = 0, 2nd is f(1) = 1 etc...
+    # decremento $v0
     addi        $v0, $v0, -1
 
     addi        $sp, $sp, -12
@@ -26,22 +18,9 @@ msg2: .asciiz "th Fibonacci is: "
     lw          $s0, 4($sp)
     addi        $sp, $sp, 12
 
-    # print result
-    move        $a0, $s1
+    # result    
     li          $v0, 1
-    syscall
-
-    la          $a0, msg2
-    li          $v0, 4
-    syscall
-
-    move        $a0, $s0
-    li          $v0, 1
-    syscall
-
-    li          $v0, 10
-    syscall
-
+ 
 fibonacci:
     lw          $t0, 0($sp)
     # if n > 46, return 0 and don't overflow 32-bit register
@@ -57,13 +36,10 @@ fibonacci:
     sw          $t0, 0($sp)
     sw          $ra, 8($sp)
     jal         fibonacci
-    # reload (n - 1)
     lw          $t0, 0($sp)
-    # get return value from fibonacci(n - 1)
     lw          $t1, 4($sp)
     lw          $ra, 8($sp)
     addi        $sp, $sp, 12
-    # save the return value from fibonacci(n - 1) on the stack
     addi        $sp, $sp, -4
     sw          $t1, 0($sp)
 
@@ -94,3 +70,4 @@ return1:
     li          $t0, 1
     sw          $t0, 4($sp)
     jr          $ra
+.endseg

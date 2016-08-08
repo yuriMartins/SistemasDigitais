@@ -1,12 +1,13 @@
-﻿Potencia
+﻿.module Potencia
 
-.data  r: .word 0.textmain:
+.data
+.pseg
 
-li $v0,5   #leitura de x
-syscall
+li $v0,5   ; x
+
 add $s0,$v0,0
-li $v0,5   #leitura de y
-syscall
+li $v0,5   ; y
+
 add $s1,$v0,0
 add $s2,$s0,0
 li $t0,1
@@ -18,9 +19,5 @@ while:
 j while
 
 fim:
-	sw $s2,r
-	li $v0,1
-	lw $a0,r
-	syscall
-	li $v0,10
-	syscall
+	sw $s2, 0($gp)
+.endseg	

@@ -1,5 +1,6 @@
-.globl main
-main:
+.module bublesort
+.data
+.pseg
 	move $s0,$gp			#get the intial point to save array 
 	addi $t0,1			# $t0 = 1
 	add $t1,$zero,$zero		# 
@@ -8,13 +9,9 @@ main:
 	add $t6,$zero,$zero        
 	add $t4,$zero,$zero        
 	sub $t7,$zero,1			# terminate        
-	li $v0,4		# system call to put the string
-	la $a0,msg1		# 
-	syscall		#
 	add $s1,$s0,$zero	# copy the pointer to array in $s1
 entervalues:
 	li $v0,5		# get the value in v0 
-	syscall		# 
 	beq $v0,$t7,bubblesort # end of string run to bubblesort
 	sb $v0,0($s1)	# put the value at the position pointed by $s1
 	addi $s1,1		# move the $s1 pointer by one
@@ -38,28 +35,11 @@ loopinterno:
 proximo:
 	addi $s2,1		#
 	bne $s2,$s1,loopinterno #
-	li $v0,4		# system call to put the string
-	la $a0,msg5		# 
-	syscall		#
-	li $v0,4		# system call to put the string
-	la $a0,msg4		# 
-	syscall		#
-	li $v0,4		# system call to put the string
-	la $a0,msg5		# 
-	syscall		#
+	
 imprime:
-	li $v0,1
-	lb $a0,0($t4)
-	syscall
-	li $v0,4
-	la $a0,msg2
-	syscall		
+		
 	addi $t4,1
 	bne $t4,$t5,imprime
 jal bubblesort	
 ending:
-	li $v0,4		# system call to put the string
-	la $a0,msg6		# 
-	syscall		#
-	li $v0,5
-	syscall	 
+.endseg	 
