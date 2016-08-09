@@ -12,28 +12,28 @@
 	add $s1,$s0,$zero		# copia o ponteiro do array em $s1
 entervalues:
 	li $v0,5			# atribui um inteiro em v0 
-	beq $v0,$t7,bubblesort 		# end of string run to bubblesort
-	sb $v0,0($s1)			# put the value at the position pointed by $s1
-	addi $s1,1			# move the $s1 pointer by one
-	add $t5,$s1,$zer		# $t5 stores the end value
+	beq $v0,$t7,bubblesort 		# end de string caminha para bubblesort
+	sb $v0,0($s1)			# colocar o valor na posição apontada por $ s1
+	addi $s1,1			# mova o ponteiro $ s1 por um
+	add $t5,$s1,$zer		# $T5 armazena o valor final
 	j entervalues
 bubblesort:
 	add $t4,$s0,$zero
 	addi $t6,1
 	#s1-1 -> s0
 	sub $s1,$s1,$t0
-	beq $s1,$s0,ending  	# we have sorted everything
+	beq $s1,$s0,ending  
 	#s0 -> s1
 	add $s2,$s0,$zero
 loopinterno:
-	lb $t1,0($s2)		# first element
-	lb $t2,1($s2)		# second element
-	slt $t3,$t2,$t1		# 
-	beq $t3,$zero,proximo	# 
-	sb $t2,0($s2)		# 
-	sb $t1,1($s2)		#		
+	lb $t1,0($s2)		# primeiro elemento
+	lb $t2,1($s2)		# segundo element0
+	slt $t3,$t2,$t1		
+	beq $t3,$zero,proximo	 
+	sb $t2,0($s2)		 
+	sb $t1,1($s2)				
 proximo:
-	addi $s2,1		#
-	bne $s2,$s1,loopinterno #
+	addi $s2,1		
+	bne $s2,$s1,loopinterno 
 
 .endseg	 

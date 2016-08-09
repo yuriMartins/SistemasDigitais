@@ -49,7 +49,7 @@ fibonacci:
     sw          $t0, 0($sp)
     sw          $ra, 8($sp)
     jal         fibonacci
-    # get return value from fibonacci(n - 2)
+    # pega return o valor a partir de fibonacci(n - 2)
     lw          $t2, 4($sp)
     lw          $ra, 8($sp)
     addi        $sp, $sp, 12
