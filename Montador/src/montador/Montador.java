@@ -16,6 +16,7 @@ public class Montador {
     private static HashMap<String, Integer> labelMap, registers;
     private static HashMap<String, String> instrutions;
     private static int codeLineCnt = 0;
+    private static String arq = "entrada.asm";
     /**
      * @param args the command line arguments
      */
@@ -40,7 +41,7 @@ public class Montador {
         }*/
         
         indexLabels();//faz uma varredura no arquivo indexando os labels
-        
+        tradutor();
            
         
         //imprimir resultados
@@ -51,7 +52,7 @@ public class Montador {
     }   
     
     private static void indexLabels() throws IOException {
-        BufferedReader sourceBr = new BufferedReader(new FileReader(new File("entrada.asm")));
+        BufferedReader sourceBr = new BufferedReader(new FileReader(new File(arq)));
         String line, label;
         String aux[];
         
@@ -77,7 +78,7 @@ public class Montador {
                             System.out.println("Segmento de dados encontrado");
                             codeLineCnt = 0;
                             break;
-                        } else if (s.equals(".pseg") || s.equals(".module") || s.equals(".data")) {// diretivas
+                        } else if (s.equals(".pseg") || s.equals(".module")||s.equals(".endseg") || s.equals(".data")) {// diretivas
                             break;
                         }
 
@@ -93,6 +94,54 @@ public class Montador {
         sourceBr.close();
     }
     
+    private static void tradutor() throws IOException {
+        BufferedReader sourceBr = new BufferedReader(new FileReader(new File(arq)));
+        String line, label;
+        String aux[];
+        boolean data =false;
+        String instrution = null;
+        
+         while ((line = sourceBr.readLine()) != null) {
+            line = line.trim();//retira os espacos do fim e comeco, se houver
+            aux = line.split("\\s+");
+            if(line.contains(".data")){
+                data =true;
+            }
+            if (line.contains(".pseg")){
+                data = false;
+            }
+            if(!data){
+                for (String s : aux) {//linha
+                    if (s.contains(";")||s.contains("#")) {//comentarios
+                        break;
+                    } else if (s.length() > 0) {
+                        if (s.contains(":")) {
+                            break;
+                        }else if (s.equals(".pseg")||s.equals(".dseg")||s.equals(".endseg") || s.equals(".module") || s.equals(".data")){
+                            break;
+                        }else{
+                            instrution = instrutions.get(aux[0]);
+                            String aux2[] = instrution.split("x");
+                            String regs[] = aux[1].split(",");
+                            //verificar se as instrucoes de cada tipo se comportam da mesma forma
+                            //se nao agrupar as que se comportam igual neste switch case
+                            switch (aux[0]){
+                                case "add":
+                                    
+                                    break;
+                            }
+                            for(int i=0; i<regs.length;i++){
+                                regs[i] = registers.get(regs[i]);
+                                
+                            } 
+                        }
+                    }
+                }
+            }
+         }
+    }
+    
+    //mudar de int pra binario(string)
     private static void createRegisters(){
         registers  = new HashMap<>();
         registers.put("$zero", 0);
@@ -128,7 +177,7 @@ public class Montador {
         registers.put("$fp", 30);
         registers.put("$ra", 31);
     }
-
+    //adicionar o tipo no inicio de cada instrucao
     private static void createInstrutions() {
         //o x servira pra dar um split na string e depois concatenar com 
         // os ids dos registadores ou valor imediato
@@ -140,12 +189,58 @@ public class Montador {
         instrutions.put("addu", "000000x00000100001");
         instrutions.put("clz", "011100x00000100000");
         instrutions.put("clo", "011100x00000100001");
-        instrutions.put("lui", "00111100000x");
+        instrutions.put("lui", "00111100000");
         instrutions.put("sub", "000000x00000100010");
         instrutions.put("subu", "000000x00000100011");
         instrutions.put("seb", "01111100000x10000100000");
         instrutions.put("seh", "01111100000x11000100000");
+        instrutions.put("div", "000000x0000000000011010");
+        instrutions.put("divu", "000000x0000000000011011");
+        instrutions.put("madd", "011100x0000000000000000");
+        instrutions.put("maddu", "011100x0000000000000001");
+        instrutions.put("msub", "011100x0000000000000100");
+        instrutions.put("msubu", "011100x0000000000000101");
+        instrutions.put("mul", "011100x00000000010");
+        instrutions.put("mult", "000000x0000000000011000");
+        instrutions.put("multu", "000000x0000000000011001");
         //logicas
-        instrutions.put(key, value);
+        instrutions.put("and", "00000x00000100100");
+        instrutions.put("andi", "001101");
+        instrutions.put("nor", "00000x00010100000");
+        instrutions.put("wsbh", "01111100000x00010100000");
+        instrutions.put("or", "000000x00000100101");
+        instrutions.put("ori", "001101");
+        instrutions.put("xor", "000000x00000100110");
+        instrutions.put("xori", "001110");
+        instrutions.put("ext", "011111x000000");//x = rs rt (pos+size-1) (pos)
+        instrutions.put("ins", "011111x000100");//x = rs rt (pos+size-1) (pos)
+        //deslocamento
+        instrutions.put("sll", "00000000000x000000");// rt rd sa//sa = constante
+        instrutions.put("sllv", "000000x00000000100");
+        instrutions.put("srl", "00000000000x000010");
+        instrutions.put("sra", "00000000000x000011");
+        instrutions.put("srav", "0000");
+        //saltos 
+        instrutions.put("slt", "000000x00000101010");
+        instrutions.put("slti", "001010");
+        instrutions.put("sltiu", "001011");
+        instrutions.put("sltu", "000000x00000101011");
+        instrutions.put("movn", "000000x00000001011");
+        instrutions.put("movz", "000000x00000001010");
+        //acesso ao acumulador
+        instrutions.put("mfhi", "0000000000000000x00000010000");
+        instrutions.put("mflo", "0000000000000000x00000010010");
+        instrutions.put("mthi", "000000x000000000000000010001");
+        instrutions.put("mtlo", "000000x000000000000000010011");
+        //saltos e branchs
+        instrutions.put("beq", "000100");//usa offset, e eu nao sei o que é
+        instrutions.put("bgtz", "000111x00000");//+offset
+        instrutions.put("bne", "000101");//+rs rt offset
+        instrutions.put("bltz", "000001x00000");
+        instrutions.put("j", "000010");//+instrution id
+        instrutions.put("jr", "000000x0000000000x001000");// 2° x = hint, que nao sei o que é
+        instrutions.put("jal", "000011");//+instrution index
     }
+
+    
 }
