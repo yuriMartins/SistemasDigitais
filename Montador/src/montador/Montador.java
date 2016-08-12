@@ -13,8 +13,8 @@ import java.util.HashMap;
  * @author jmalmeida
  */
 public class Montador {
-    private static HashMap<String, Integer> labelMap, registers;
-    private static HashMap<String, String> instrutions;
+    private static HashMap<String, Integer> labelMap;
+    private static HashMap<String, String> instrutions, registers;
     private static int codeLineCnt = 0;
     private static String arq = "entrada.asm";
     /**
@@ -74,11 +74,11 @@ public class Montador {
                         System.out.println(label + " " + codeLineCnt + "\n");
                     } else {
                         incrementLineCount = true;
-                        if (s.equals(".dseg")) { //nossos assemblys de testes nao tem isso, mas ta ai so por precauçao
+                        if (s.equals(".data")) { //nossos assemblys de testes nao tem isso, mas ta ai so por precauçao
                             System.out.println("Segmento de dados encontrado");
                             codeLineCnt = 0;
                             break;
-                        } else if (s.equals(".pseg") || s.equals(".module")||s.equals(".endseg") || s.equals(".data")) {// diretivas
+                        } else if (s.equals(".pseg") || s.equals(".module")||s.equals(".endseg")) {// diretivas
                             break;
                         }
 
@@ -117,7 +117,7 @@ public class Montador {
                     } else if (s.length() > 0) {
                         if (s.contains(":")) {
                             break;
-                        }else if (s.equals(".pseg")||s.equals(".dseg")||s.equals(".endseg") || s.equals(".module") || s.equals(".data")){
+                        }else if (s.equals(".pseg")||s.equals(".endseg") || s.equals(".module") || s.equals(".data")){
                             break;
                         }else{
                             instrution = instrutions.get(aux[0]);
@@ -144,38 +144,38 @@ public class Montador {
     //mudar de int pra binario(string)
     private static void createRegisters(){
         registers  = new HashMap<>();
-        registers.put("$zero", 0);
-        registers.put("$at", 1);
-        registers.put("$v0", 2);
-        registers.put("$v1", 3);
-        registers.put("$a0", 4);
-        registers.put("$a1", 5);
-        registers.put("$a2", 6);
-        registers.put("$a3", 7);
-        registers.put("$t0", 8);
-        registers.put("$t1", 9);
-        registers.put("$t2", 10);
-        registers.put("$t3", 11);
-        registers.put("$t4", 12);
-        registers.put("$t5", 13);
-        registers.put("$t6", 14);
-        registers.put("$t7", 15);
-        registers.put("$s0", 16);
-        registers.put("$s1", 17);
-        registers.put("$s2", 18);
-        registers.put("$s3", 19);
-        registers.put("$s4", 20);
-        registers.put("$s5", 21);
-        registers.put("$s6", 22);
-        registers.put("$s7", 23);
-        registers.put("$t8", 24);
-        registers.put("$t9", 25);
-        registers.put("$k0", 26);
-        registers.put("$k1", 27);
-        registers.put("$gp", 28);
-        registers.put("$sp", 29);
-        registers.put("$fp", 30);
-        registers.put("$ra", 31);
+        registers.put("$zero", "00000");
+        registers.put("$at", "00001");
+        registers.put("$v0", "00010");
+        registers.put("$v1", "00011");
+        registers.put("$a0", "00100");
+        registers.put("$a1", "00101");
+        registers.put("$a2", "00110");
+        registers.put("$a3", "00111");
+        registers.put("$t0", "01000");
+        registers.put("$t1", "01001");
+        registers.put("$t2", "01010");
+        registers.put("$t3", "01011");
+        registers.put("$t4", "01100");
+        registers.put("$t5", "01101");
+        registers.put("$t6", "01110");
+        registers.put("$t7", "01111");
+        registers.put("$s0", "10000");
+        registers.put("$s1", "10001");
+        registers.put("$s2", "10010");
+        registers.put("$s3", "10011");
+        registers.put("$s4", "10100");
+        registers.put("$s5", "10101");
+        registers.put("$s6", "10110");
+        registers.put("$s7", "10111");
+        registers.put("$t8", "11000");
+        registers.put("$t9", "11001");
+        registers.put("$k0", "11010");
+        registers.put("$k1", "11011");
+        registers.put("$gp", "11100");
+        registers.put("$sp", "11101");
+        registers.put("$fp", "11110");
+        registers.put("$ra", "11111");
     }
     //adicionar o tipo no inicio de cada instrucao
     private static void createInstrutions() {
@@ -219,8 +219,11 @@ public class Montador {
         instrutions.put("sllv", "000000x00000000100");
         instrutions.put("srl", "00000000000x000010");
         instrutions.put("sra", "00000000000x000011");
-        instrutions.put("srav", "0000");
-        //saltos 
+        instrutions.put("srav", "000000x00000000111");
+        instrutions.put("srlv", "000000x00000000110");
+        instrutions.put("rotr", "00000000001x000010");
+        instrutions.put("rotrv", "000000x00001000110");
+        //condicionais e trocas
         instrutions.put("slt", "000000x00000101010");
         instrutions.put("slti", "001010");
         instrutions.put("sltiu", "001011");
@@ -233,13 +236,21 @@ public class Montador {
         instrutions.put("mthi", "000000x000000000000000010001");
         instrutions.put("mtlo", "000000x000000000000000010011");
         //saltos e branchs
-        instrutions.put("beq", "000100");//usa offset, e eu nao sei o que é
+        instrutions.put("beq", "000100");//usa offset, é a constante que vem an instrucao
         instrutions.put("bgtz", "000111x00000");//+offset
         instrutions.put("bne", "000101");//+rs rt offset
         instrutions.put("bltz", "000001x00000");
         instrutions.put("j", "000010");//+instrution id
-        instrutions.put("jr", "000000x0000000000x001000");// 2° x = hint, que nao sei o que é
+        instrutions.put("jr", "000000x000000000000000001000");// 2° x = hint, é usado em pipeline set pra 0(no momento)
         instrutions.put("jal", "000011");//+instrution index
+        instrutions.put("jalr", "000000x00000x00000001001");
+        //load e store
+        instrutions.put("lb", "100000");
+        instrutions.put("lw", "100011");
+        instrutions.put("lh", "100011");
+        instrutions.put("sb", "101000");
+        instrutions.put("sh", "101001");
+        instrutions.put("sw", "101011");
     }
 
     
