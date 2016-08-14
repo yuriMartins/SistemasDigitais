@@ -60,7 +60,7 @@ public class Montador {
         createRegisters();
         System.out.println("First run - Indexando labels\n");
         indexLabels();//faz uma varredura no arquivo indexando os labels
-        System.out.println("\nSecond run - Traduzindo\n");
+        System.out.println("\nSecond run - Traduzindo");
         tradutor(); //traduz pra binario e ja grava no arquivo
                     //gera um arquivo pra segemento de dados (.data) e outro pra instrucoes (.pseg)                    
         System.out.println("Traduzido com sucesso!");//ou nao
@@ -142,9 +142,11 @@ public class Montador {
         String instrution = null;
         String labelIndex =null;//variavel auxiliar pra escrever o index com o tamnho correto
         int auxInt;//variavel auxiliar pra conversoes de texto pra inteiro
-        
+        boolean erroSintax;//se for erro nao grava na saida
         
          while ((line = sourceBr.readLine()) != null) {
+             
+            erroSintax = false;
              //divisoes de elementos por espacos e virgulas e retirada de labels e comentarios
             aux = line.split("#|;"); //separa os comentarios
             line = aux[0]; //pega so a primeira string, pois não será comentario
@@ -162,9 +164,8 @@ public class Montador {
             else
                 System.out.println(line);         
             line = line.trim();//retira os espacos do inicio e fim
-            aux = line.split("\\s+,*|,+\\s*");// separa por espacos e virgulas
+            aux = line.split("\\s+,*|,+\\s*");// separa por espacos e virgulas            
             
-             
             if(!((aux.length==1) && (aux[0].equals("")))){//se nao for uma linha vazia, faca
                 
                 if (line.contains(".pseg")){
@@ -192,7 +193,6 @@ public class Montador {
                         instrution = codesInst[0]; //ja coloca o a primeira parte (opcode), todas instrucoes fazem isso
                         //verificar se as instrucoes de cada tipo se comportam da mesma forma
                         //se nao agrupar as que se comportam igual neste switch case
-                        System.out.println(instrution+" - opcode");
                         
                         switch (aux[0]){
                             case "addi":case "addiu":case "addu":case "clz":case "clo":case "lui":case "sub":case "subu":
@@ -324,10 +324,13 @@ public class Montador {
                                 instrution = instrution.concat(labelIndex);
                                 break;
                             default:
-                                System.out.println("Erro de sintaxe");
+                                System.out.println(aux[0]+" - Erro de sintaxe");
+                                erroSintax = true;
                         }
-                        gravarPseg.printf(instrution+"%n");
-                        System.out.println(instrution+" - "+instrution.length()+"bits");
+                        if(!erroSintax){
+                            gravarPseg.printf(instrution+"%n");
+                            System.out.println(instrution+" - "+instrution.length()+"bits");
+                        }
                     }                    
                 }
             }
