@@ -7,6 +7,7 @@ package montador;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.Scanner;
 
 /**
  *
@@ -15,76 +16,100 @@ import java.util.HashMap;
 public class Montador {
     private static HashMap<String, Integer> labelMap;
     private static HashMap<String, String> instrutions, registers;
-    private static int codeLineCnt = 0;
-    private static String arq = "entrada.asm";
+    private static String arq = "codes/";
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws IOException {        
+    public static void main(String[] args) throws IOException {     
         labelMap = new HashMap<>();
+        Scanner ler = new Scanner(System.in);
+        System.out.println("\nEscolha um codigo para ser traduzido:\n 1 - Bubllesort\n 2 - Fatorial\n 3 - FibonacciRecursive\n "
+                + "4 - Potencia\n 5 - Primos\n 6 - Raiz quadrada\n 7 - Outro");
+        int opcao = ler.nextInt();
+        switch (opcao){
+            case 1:
+                arq = arq.concat("Bubblesort");
+                break;
+            case 2:
+                arq = arq.concat("Fatorial");
+                break;
+            case 3:
+                arq = arq.concat("FibonacciRecursive");
+                break;
+            case 4:
+                arq = arq.concat("Potencia");
+                break;
+            case 5:
+                arq = arq.concat("Primos");
+                break;
+            case 6:
+                arq = arq.concat("Raiz quadrada");
+                break;
+            case 7:
+                System.out.println("O arquivo deve estar na pasta /codes deste projeto, e com extensao .asm");
+                System.out.println("Digite o nome do arquivo (sem a extensao):");
+                arq= arq.concat(ler.next());
+                break;
+            default:
+                System.out.println("Opcao invalida!");
+                return;
+        }
+        
+        //cria as listas pra comparações
         createInstrutions();
         createRegisters();
-        File file = new File("saida.txt");          
-        if (file.exists()){      
-            new File("saida.txt").createNewFile();
-            file = new File("saida.txt");
-        }        
-        PrintWriter gravarArq = new PrintWriter(new FileWriter(file)); 
-        
-        /*//leitor
-        BufferedReader reader = new BufferedReader(new FileReader(new File("entrada.asm")));
-        String line;
-        while ((line = reader.readLine()) != null){//ler todas linhas
-            if (line.contains(".module")){
-                
-            }
-        }*/
-        
+        System.out.println("First run - Indexando labels\n");
         indexLabels();//faz uma varredura no arquivo indexando os labels
-        tradutor();
-           
-        
-        //imprimir resultados
-        for(String arg: args){
-            gravarArq.printf(arg);   
-        }
-        gravarArq.close();
+        System.out.println("\nSecond run - Traduzindo\n");
+        tradutor(); //traduz pra binario e ja grava no arquivo
+                    //gera um arquivo pra segemento de dados (.data) e outro pra instrucoes (.pseg)                    
+        System.out.println("Traduzido com sucesso!");//ou nao
+        //fim
     }   
     
     private static void indexLabels() throws IOException {
-        BufferedReader sourceBr = new BufferedReader(new FileReader(new File(arq)));
+        BufferedReader sourceBr = new BufferedReader(new FileReader(new File(arq+".asm")));
         String line, label;
         String aux[];
-        
+        int codeLineCnt = 0;
         boolean incrementLineCount = true;
         
         while ((line = sourceBr.readLine()) != null) {
-            line = line.trim();//retira os espacos do fim e comeco, se houver
-            aux = line.split("\\s+");
+            aux = line.split("#|;"); //separa os comentarios
+            line = aux[0]; //pega so a primeira string, pois não será comentario
+            line = line.trim();
+            aux = line.split("\\s+");// separa por espacos, se houver
+            if(!((aux.length==1) && (aux[0].equals("")))){//linha vazia
+                for (String s : aux) {
+                    if (s.length() > 0) {
+                        if (s.contains(":")) {
+                            if (aux.length>2)//tem instrucao na linha do label
+                                incrementLineCount = true;
+                            else
+                                incrementLineCount = false;
+                            if (s.length()==1){
+                                label = aux[0];
+                            }else{
+                                label = s.split(":")[0];
+                            }
+                            labelMap.put(label, codeLineCnt);
+                            System.out.println("Label encontrada:");
+                            System.out.println(label + " " + codeLineCnt);
+                        } else {
+                            incrementLineCount = true;
+                            if (s.equals(".endseg")) { 
+                                System.out.println("fim de codigo");
+                                codeLineCnt = 0;
+                                break;
+                            } else if (s.equals(".pseg") || s.equals(".module")||s.equals(".data")) {// diretivas
+                                System.out.println(s);
+                                break;
+                            }
 
-            for (String s : aux) {
-                if (s.contains(";")||s.contains("#")) {//comentarios
-                    break;
-                } else if (s.length() > 0) {
-                    if (s.contains(":")) {
-                        incrementLineCount = false;
-                        label = s.split(":")[0];
-                        labelMap.put(label, codeLineCnt);
-                        System.out.println("Label encontrada:");
-                        System.out.println(label + " " + codeLineCnt + "\n");
-                    } else {
-                        incrementLineCount = true;
-                        if (s.equals(".data")) { //nossos assemblys de testes nao tem isso, mas ta ai so por precauçao
-                            System.out.println("Segmento de dados encontrado");
-                            codeLineCnt = 0;
-                            break;
-                        } else if (s.equals(".pseg") || s.equals(".module")||s.equals(".endseg")) {// diretivas
-                            break;
-                        }
-
-                        if (incrementLineCount) {
-                            codeLineCnt++;
-                            break;
+                            if (incrementLineCount) {
+                                codeLineCnt++;
+                                break;
+                            }
                         }
                     }
                 }
@@ -95,50 +120,220 @@ public class Montador {
     }
     
     private static void tradutor() throws IOException {
-        BufferedReader sourceBr = new BufferedReader(new FileReader(new File(arq)));
-        String line, label;
+        //gravadores
+        File file1 = new File(arq+"_pseg.txt");          
+        if (file1.exists()){      
+            new File(arq+"_pseg.txt").createNewFile();
+            file1 = new File(arq+"_pseg.txt");
+        }        
+        PrintWriter gravarPseg = new PrintWriter(new FileWriter(file1)); 
+        File file2 = new File(arq+"_data.txt");          
+        if (file2.exists()){      
+            new File(arq+"_data.txt").createNewFile();
+            file2 = new File(arq+"_data.txt");
+        }    
+        //leitor
+        PrintWriter gravarData = new PrintWriter(new FileWriter(file2));
+        BufferedReader sourceBr = new BufferedReader(new FileReader(new File(arq+".asm")));
+        //auxiliares
+        String line;
         String aux[];
         boolean data =false;
         String instrution = null;
+        String labelIndex =null;//variavel auxiliar pra escrever o index com o tamnho correto
+        int auxInt;//variavel auxiliar pra conversoes de texto pra inteiro
+        
         
          while ((line = sourceBr.readLine()) != null) {
-            line = line.trim();//retira os espacos do fim e comeco, se houver
-            aux = line.split("\\s+");
-            if(line.contains(".data")){
-                data =true;
+             //divisoes de elementos por espacos e virgulas e retirada de labels e comentarios
+            aux = line.split("#|;"); //separa os comentarios
+            line = aux[0]; //pega so a primeira string, pois não será comentario
+            line = line.trim();
+            if (line.contains(":")){//tira os labels
+                //aproveitar a instrucao se houver, ex: loop: add $,$,$
+                String temp[] = line.split(":");
+                if(temp.length>1)
+                    line = temp[1];
+                else
+                    line = "";
             }
-            if (line.contains(".pseg")){
-                data = false;
-            }
-            if(!data){
-                for (String s : aux) {//linha
-                    if (s.contains(";")||s.contains("#")) {//comentarios
-                        break;
-                    } else if (s.length() > 0) {
-                        if (s.contains(":")) {
-                            break;
-                        }else if (s.equals(".pseg")||s.equals(".endseg") || s.equals(".module") || s.equals(".data")){
-                            break;
-                        }else{
-                            instrution = instrutions.get(aux[0]);
-                            String aux2[] = instrution.split("x");
-                            String regs[] = aux[1].split(",");
-                            //verificar se as instrucoes de cada tipo se comportam da mesma forma
-                            //se nao agrupar as que se comportam igual neste switch case
-                            switch (aux[0]){
-                                case "add":
-                                    
-                                    break;
-                            }
-                            for(int i=0; i<regs.length;i++){
-                                regs[i] = registers.get(regs[i]);
-                                
-                            } 
-                        }
+            if (line.equals(""))
+                System.out.println("void line"); 
+            else
+                System.out.println(line);         
+            line = line.trim();//retira os espacos do inicio e fim
+            aux = line.split("\\s+,*|,+\\s*");// separa por espacos e virgulas
+            
+             
+            if(!((aux.length==1) && (aux[0].equals("")))){//se nao for uma linha vazia, faca
+                
+                if (line.contains(".pseg")){
+                    System.out.println("Segmento de codigo:");
+                    data = false;
+                }
+                if(data){
+                    auxInt = Integer.parseInt(aux[1]);
+                    String dataBin32 = String.format("%32s", Integer.toBinaryString(auxInt)).replace(' ', '0'); 
+                    System.out.println(dataBin32+" - "+dataBin32.length()+"bits");
+                    gravarData.printf(dataBin32+"%n");
+                }else{
+                    if(line.contains(".data")){
+                        System.out.println("Segmento de dados:");
+                        data =true;
                     }
+                    //verificações a partir do primeiro elemento da linha
+                    if (!(aux[0].contains(".data")||aux[0].contains(".pseg")||aux[0].contains(".endseg") || aux[0].contains(".module"))){
+                        //considerando que so existe uma instrução por linha
+                        
+                        instrution = instrutions.get(aux[0]);
+                        if (instrution == null)
+                            instrution = "";
+                        String codesInst[] = instrution.split("x");
+                        instrution = codesInst[0]; //ja coloca o a primeira parte (opcode), todas instrucoes fazem isso
+                        //verificar se as instrucoes de cada tipo se comportam da mesma forma
+                        //se nao agrupar as que se comportam igual neste switch case
+                        System.out.println(instrution+" - opcode");
+                        
+                        switch (aux[0]){
+                            case "addi":case "addiu":case "addu":case "clz":case "clo":case "lui":case "sub":case "subu":
+                                case "seb":case "seh":case "div":case "divu":case "madd":case "maddu":case "msub":case "msubu":
+                                case "mul":case "mult":case "multu": 
+                                    //aritimeticas
+                                case "and":case "andi":case "nor":case "wsbh":case "or":case "ori":case "xor":case "xori":
+                                    //logicas, exceto ins e ext
+                                case "sll":case "sllv":case "srl":case "sra":case "srav":case "srlv":case "rotr":case "rotrv":
+                                    //deslocamento
+                                case "slt":case "slti":case "sltiu":case "sltu":case "movn":case "movz":
+                                    //condicionais e de troca
+                                case "mfhi":case "mflo":case "mthi":case "mtlo":
+                                    //acumulador
+                                case "jr":
+                                    //caso especifico de jump (so esse)
+                                    //todos casos acima tem: $d,$s,$t |$d,$s| $d |$d,$s,c| $d,c
+                                    // formato da concatenação 01std01
+                                    boolean imediate =false;
+                                    for(int i=2; i<aux.length; i++){
+                                        if (!aux[i].contains("$")){//imediato
+                                            imediate = true;
+                                            //se for uma cosntante, converter pra binario
+                                            instrution = instrution.concat(registers.get(aux[1]));//d
+                                            auxInt = Integer.parseInt(aux[i]);
+                                            aux[i] = String.format("%16s", Integer.toBinaryString(auxInt)).replace(' ', '0');   
+                                            instrution = instrution.concat(aux[i]);                                             
+                                        }else{ //registrador                                            
+                                            instrution = instrution.concat(registers.get(aux[i]));//s & t                                            
+                                        }                                                                              
+                                    }
+                                    if (!imediate){
+                                        instrution = instrution.concat(registers.get(aux[1]));//d
+                                        instrution = instrution.concat(codesInst[1]);
+                                    }
+                                break;
+                            case "lb":case "lw":case "lh":case "sb":case "sh":case "sw":
+                                //load e store  $d, c($s)
+                                // formato da concatenação 01sdc
+                                String aux2[] = aux[2].split("\\s+\\(*|\\(+\\s*|\\s+\\)*|\\)+\\s*");//separa c de $s
+                                instrution = instrution.concat(registers.get(aux2[1])); //s
+                                instrution = instrution.concat(registers.get(aux[1])); //d
+                                //converte a constante pra binario
+                                auxInt = Integer.parseInt(aux2[0]);
+                                aux2[0] = Integer.toBinaryString(auxInt);
+                                auxInt = Integer.parseInt(aux2[0]);//c
+                                labelIndex = String.format("%16s", Integer.toBinaryString(auxInt)).replace(' ', '0');
+                                instrution = instrution.concat(labelIndex);
+                                break;
+
+                            //casos especificos
+                                
+                            case "add":
+                                //$d, $s, $t ou c
+                                //01std01 ou 01sdc                                
+                                if (aux[3].contains("$")){//add
+                                    instrution = instrution.concat(registers.get(aux[2]));//s
+                                    instrution = instrution.concat(registers.get(aux[3]));//t
+                                    instrution = instrution.concat(registers.get(aux[1]));//d
+                                    instrution = instrution.concat(codesInst[1]); //fuction
+                                }else{//addi
+                                    instrution ="";
+                                    instrution = instrution.concat(instrutions.get("addi")); //troca o opcode pro addi
+                                    instrution = instrution.concat(registers.get(aux[2]));//s
+                                    instrution = instrution.concat(registers.get(aux[1]));//d
+                                    auxInt = Integer.parseInt(aux[3]);
+                                    labelIndex = String.format("%16s", Integer.toBinaryString(auxInt)).replace(' ', '0');
+                                    instrution = instrution.concat(labelIndex);
+                                }
+                                break;
+                            case "li":
+                                //$d, c
+                                //na verdade é o ori $d, $zero, c
+                                //formato: 01dc                                
+                                instrution = instrution.concat(registers.get(aux[1]));//d
+                                auxInt = Integer.parseInt(aux[2]);
+                                labelIndex = String.format("%16s", Integer.toBinaryString(auxInt)).replace(' ', '0');                                    
+                                instrution = instrution.concat(labelIndex);                                
+                                break;
+                            case "j":case "jal":
+                                // label
+                                //formato: 01Labelindex
+                                labelIndex = String.format("%26s", Integer.toBinaryString(labelMap.get(aux[1]))).replace(' ', '0');                                    
+                                instrution = instrution.concat(labelIndex);
+                                break;
+                            case "jalr":
+                                //$d, $s
+                                //formato: 01s01d01
+                                instrution = instrution.concat(registers.get(aux[2]));//s
+                                instrution = instrution.concat(codesInst[1]);
+                                instrution = instrution.concat(registers.get(aux[1]));//d
+                                instrution = instrution.concat(codesInst[2]);
+                                break;
+                            case "ins":
+                                //$d $s, pos, size
+                                //ins: 01sd pos+size-1 pos 01
+                                instrution = instrution.concat(registers.get(aux[2]));//s
+                                instrution = instrution.concat(registers.get(aux[1]));//d
+                                auxInt = Integer.parseInt(aux[3])+Integer.parseInt(aux[4])-1;//pos+size-1
+                                instrution = instrution.concat(String.format("%5s", Integer.toBinaryString(auxInt)).replace(' ', '0'));
+                                auxInt = Integer.parseInt(aux[3]);//pos
+                                instrution = instrution.concat(String.format("%5s", Integer.toBinaryString(auxInt)).replace(' ', '0'));
+                                break;                                
+                            case "ext":
+                                // $d $s, pos, size
+                                //formato:  ext 01sd size-1 pos 01
+                                instrution = instrution.concat(registers.get(aux[2]));//s
+                                instrution = instrution.concat(registers.get(aux[1]));//d
+                                auxInt = Integer.parseInt(aux[4])-1;//size-1
+                                instrution = instrution.concat(String.format("%5s", Integer.toBinaryString(auxInt)).replace(' ', '0'));
+                                auxInt = Integer.parseInt(aux[3]);//pos
+                                instrution = instrution.concat(String.format("%5s", Integer.toBinaryString(auxInt)).replace(' ', '0'));
+                                instrution = instrution.concat(codesInst[1]);
+                                break;
+                            case "beq":case "bne":
+                                //$t, $s, label
+                                //formato: 01st labelIndex
+                                instrution = instrution.concat(registers.get(aux[2]));//s
+                                instrution = instrution.concat(registers.get(aux[1]));//t
+                                labelIndex = String.format("%16s", Integer.toBinaryString(labelMap.get(aux[3]))).replace(' ', '0');                                    
+                                instrution = instrution.concat(labelIndex);
+                                break;
+                            case "bgtz":case "bltz":
+                                //$s, label
+                                //formato: 01s01 labelIndex
+                                instrution = instrution.concat(registers.get(aux[1]));//s
+                                instrution = instrution.concat(codesInst[1]);
+                                labelIndex = String.format("%16s", Integer.toBinaryString(labelMap.get(aux[2]))).replace(' ', '0');                                    
+                                instrution = instrution.concat(labelIndex);
+                                break;
+                            default:
+                                System.out.println("Erro de sintaxe");
+                        }
+                        gravarPseg.printf(instrution+"%n");
+                        System.out.println(instrution+" - "+instrution.length()+"bits");
+                    }                    
                 }
             }
-         }
+        }
+         gravarData.close();
+         gravarPseg.close();
     }
     
     //mudar de int pra binario(string)
@@ -177,6 +372,7 @@ public class Montador {
         registers.put("$fp", "11110");
         registers.put("$ra", "11111");
     }
+    
     //adicionar o tipo no inicio de cada instrucao
     private static void createInstrutions() {
         //o x servira pra dar um split na string e depois concatenar com 
@@ -241,9 +437,9 @@ public class Montador {
         instrutions.put("bne", "000101");//+rs rt offset
         instrutions.put("bltz", "000001x00000");
         instrutions.put("j", "000010");//+instrution id
-        instrutions.put("jr", "000000x000000000000000001000");// 2° x = hint, é usado em pipeline set pra 0(no momento)
+        instrutions.put("jr", "000000x000000000000000001000");//hint, é usado em pipeline, set pra 0(no momento)
         instrutions.put("jal", "000011");//+instrution index
-        instrutions.put("jalr", "000000x00000x00000001001");
+        instrutions.put("jalr", "000000x00000x00000001001");//hint, é usado em pipeline, set pra 0(no momento)
         //load e store
         instrutions.put("lb", "100000");
         instrutions.put("lw", "100011");
@@ -251,7 +447,8 @@ public class Montador {
         instrutions.put("sb", "101000");
         instrutions.put("sh", "101001");
         instrutions.put("sw", "101011");
-    }
-
-    
+        //pseudoInstrucoes
+        instrutions.put("li", "00110100000");//na verdade é a ori
+        
+    }    
 }
