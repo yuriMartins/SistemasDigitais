@@ -1,4 +1,4 @@
-.module bublesort
+﻿.module bublesort
 .data
 .pseg
 	move $s0,$gp			#pega o ponteiro inicial e salva no array. 
@@ -15,7 +15,7 @@ entervalues:
 	beq $v0,$t7,bubblesort 		# end de string caminha para bubblesort
 	sb $v0,0($s1)			# colocar o valor na posição apontada por $ s1
 	addi $s1,1			# mova o ponteiro $ s1 por um
-	add $t5,$s1,$zer		# $T5 armazena o valor final
+	add $t5,$s1,$zero		# $T5 armazena o valor final
 	j entervalues
 bubblesort:
 	add $t4,$s0,$zero
@@ -35,5 +35,6 @@ loopinterno:
 proximo:
 	addi $s2,1		
 	bne $s2,$s1,loopinterno 
+ending:
 
 .endseg	 

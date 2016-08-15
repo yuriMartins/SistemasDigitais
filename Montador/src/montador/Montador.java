@@ -16,55 +16,64 @@ import java.util.Scanner;
 public class Montador {
     private static HashMap<String, Integer> labelMap;
     private static HashMap<String, String> instrutions, registers;
-    private static String arq = "codes/";
+    private static String arq;
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws IOException {     
-        labelMap = new HashMap<>();
-        Scanner ler = new Scanner(System.in);
-        System.out.println("\nEscolha um codigo para ser traduzido:\n 1 - Bubllesort\n 2 - Fatorial\n 3 - FibonacciRecursive\n "
-                + "4 - Potencia\n 5 - Primos\n 6 - Raiz quadrada\n 7 - Outro");
-        int opcao = ler.nextInt();
-        switch (opcao){
-            case 1:
-                arq = arq.concat("Bubblesort");
-                break;
-            case 2:
-                arq = arq.concat("Fatorial");
-                break;
-            case 3:
-                arq = arq.concat("FibonacciRecursive");
-                break;
-            case 4:
-                arq = arq.concat("Potencia");
-                break;
-            case 5:
-                arq = arq.concat("Primos");
-                break;
-            case 6:
-                arq = arq.concat("Raiz quadrada");
-                break;
-            case 7:
-                System.out.println("O arquivo deve estar na pasta /codes deste projeto, e com extensao .asm");
-                System.out.println("Digite o nome do arquivo (sem a extensao):");
-                arq= arq.concat(ler.next());
-                break;
-            default:
-                System.out.println("Opcao invalida!");
-                return;
+    public static void main(String[] args) throws IOException {           
+        while(true){
+            arq = "codes/";
+            labelMap = new HashMap<>();
+            Scanner ler = new Scanner(System.in);
+            System.out.println("\nEscolha um codigo para ser traduzido:\n 0 - Sair\n 1 - Bubllesort\n 2 - Fatorial\n 3 - FibonacciRecursive\n "
+                    + "4 - Potencia\n 5 - Primos\n 6 - Raiz quadrada\n 7 - Outro");
+            int opcao = ler.nextInt();
+            switch (opcao){
+                case 0:
+                    return;
+                case 1:
+                    arq = arq.concat("Bubblesort");
+                    break;
+                case 2:
+                    arq = arq.concat("Fatorial");
+                    break;
+                case 3:
+                    arq = arq.concat("FibonacciRecursive");
+                    break;
+                case 4:
+                    arq = arq.concat("Potencia");
+                    break;
+                case 5:
+                    arq = arq.concat("Primos");
+                    break;
+                case 6:
+                    arq = arq.concat("Raiz quadrada");
+                    break;
+                case 7:
+                    System.out.println("O arquivo deve estar na pasta /codes deste projeto, e com extensao .asm");
+                    System.out.println("Digite o nome do arquivo (sem a extensao):");
+                    arq= arq.concat(ler.next());
+                    break;
+                default:
+                    System.out.println("Opcao invalida!");
+                    return;
+            }
+
+            //cria as listas pra comparações
+            createInstrutions();
+            createRegisters();
+            try{
+                System.out.println("First run - Indexando labels\n");
+                indexLabels();//faz uma varredura no arquivo indexando os labels
+                System.out.println("\nSecond run - Traduzindo");
+                tradutor(); //traduz pra binario e ja grava no arquivo
+                            //gera um arquivo pra segemento de dados (.data) e outro pra instrucoes (.pseg)                    
+                System.out.println("Traduzido com sucesso!");//ou nao
+                //fim
+            }catch(Exception e){
+                System.out.println("Houston, temos um problema!");
+            }            
         }
-        
-        //cria as listas pra comparações
-        createInstrutions();
-        createRegisters();
-        System.out.println("First run - Indexando labels\n");
-        indexLabels();//faz uma varredura no arquivo indexando os labels
-        System.out.println("\nSecond run - Traduzindo");
-        tradutor(); //traduz pra binario e ja grava no arquivo
-                    //gera um arquivo pra segemento de dados (.data) e outro pra instrucoes (.pseg)                    
-        System.out.println("Traduzido com sucesso!");//ou nao
-        //fim
     }   
     
     private static void indexLabels() throws IOException {
@@ -101,7 +110,11 @@ public class Montador {
                                 System.out.println("fim de codigo");
                                 codeLineCnt = 0;
                                 break;
-                            } else if (s.equals(".pseg") || s.equals(".module")||s.equals(".data")) {// diretivas
+                            } else if (s.equals(".pseg") ||s.equals(".data")) {// diretivas
+                                codeLineCnt =0;//reset
+                                System.out.println(s);
+                                break;
+                            }else if(s.equals(".module")){
                                 System.out.println(s);
                                 break;
                             }
@@ -263,6 +276,18 @@ public class Montador {
                                     instrution = instrution.concat(labelIndex);
                                 }
                                 break;
+                            case "move":
+                                //move $d,$s
+                                //add $d, $s, $zero
+                                //formato: 01szerod01      
+                                instrution = instrutions.get("add");
+                                codesInst = instrution.split("x");
+                                instrution = codesInst[0];
+                                instrution = instrution.concat(registers.get(aux[2]));//s
+                                instrution = instrution.concat(registers.get("$zero"));//zero
+                                instrution = instrution.concat(registers.get(aux[1]));//d
+                                instrution = instrution.concat(codesInst[1]); //fuction 
+                                break;
                             case "li":
                                 //$d, c
                                 //na verdade é o ori $d, $zero, c
@@ -328,6 +353,8 @@ public class Montador {
                                 erroSintax = true;
                         }
                         if(!erroSintax){
+                            //transformar instrução pra hexadecimal
+                            instrution = binToHexa(instrution);
                             gravarPseg.printf(instrution+"%n");
                             System.out.println(instrution+" - "+instrution.length()+"bits");
                         }
@@ -454,4 +481,17 @@ public class Montador {
         instrutions.put("li", "00110100000");//na verdade é a ori
         
     }    
+    
+    private static String binToHexa(String aux){
+        long binarioDecimal;  
+        binarioDecimal = 0;
+        long controle = 1;
+        for (int i = aux.length()-1; i >= 0;i--) {      	  
+            //calcula
+            binarioDecimal += controle * Integer.parseInt(aux.charAt(i)+"");
+            controle*=2;
+        }  
+        aux = "0x"+String.format("%08x", binarioDecimal);
+        return aux; 
+    }
 }

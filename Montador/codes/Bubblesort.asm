@@ -35,5 +35,6 @@ loopinterno:
 proximo:
 	addi $s2,1		
 	bne $s2,$s1,loopinterno 
+ending:
 
 .endseg	 

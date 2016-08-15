@@ -21,7 +21,7 @@
 factorial:
     # caso base
     lw        $t0, 0($sp)
-    beq       $t0, 0, return1
+    beq       $t0, $zero, return1
 
     addi      $t0, $t0, -1
     # factorial recursivo

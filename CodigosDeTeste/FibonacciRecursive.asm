@@ -24,11 +24,15 @@
 fibonacci:
     lw          $t0, 0($sp)
     # if n > 46, return 0 and don't overflow 32-bit register
-    bge         $t0, 46, return0
+    li $t4, 46
+    sub   	$t0, $t0, $t4
+    bgtz         $t0, return0
 
     # base case
-    ble         $t0, 0, return0
-    beq         $t0, 1, return1
+    bltz        $t0, return0
+    beq         $t0, $zero, return0
+    li 		$t4, 1
+    beq         $t0, $t4, return1
 
     # fibonacci(n - 1)
     addi        $t0, $t0, -1
@@ -63,7 +67,7 @@ fibonacci:
     jr          $ra 
 
 return0:
-    sw          $0, 4($sp)
+    sw          $t0, 4($sp)
     jr          $ra  
 
 return1:
