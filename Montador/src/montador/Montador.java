@@ -72,7 +72,10 @@ public class Montador {
                 //fim
             }catch(Exception e){
                 System.out.println("Houston, temos um problema!");
-            }            
+            }   
+            System.out.println("\nPressione qualquer botao...");
+            ler.nextLine();
+            ler.nextLine();
         }
     }   
     
@@ -231,8 +234,11 @@ public class Montador {
                                             //se for uma cosntante, converter pra binario
                                             instrution = instrution.concat(registers.get(aux[1]));//d
                                             auxInt = Integer.parseInt(aux[i]);
+                                            System.out.println("n "+auxInt);
                                             aux[i] = String.format("%16s", Integer.toBinaryString(auxInt)).replace(' ', '0');   
-                                            instrution = instrution.concat(aux[i]);                                             
+                                            if (auxInt<0)
+                                                aux[i] = aux[i].substring(15, 31);
+                                            instrution = instrution.concat(aux[i]); 
                                         }else{ //registrador                                            
                                             instrution = instrution.concat(registers.get(aux[i]));//s & t                                            
                                         }                                                                              
@@ -249,10 +255,10 @@ public class Montador {
                                 instrution = instrution.concat(registers.get(aux2[1])); //s
                                 instrution = instrution.concat(registers.get(aux[1])); //d
                                 //converte a constante pra binario
-                                auxInt = Integer.parseInt(aux2[0]);
-                                aux2[0] = Integer.toBinaryString(auxInt);
                                 auxInt = Integer.parseInt(aux2[0]);//c
                                 labelIndex = String.format("%16s", Integer.toBinaryString(auxInt)).replace(' ', '0');
+                                if (auxInt<0)
+                                    labelIndex = labelIndex.substring(15, 31);                                    
                                 instrution = instrution.concat(labelIndex);
                                 break;
 
@@ -273,6 +279,8 @@ public class Montador {
                                     instrution = instrution.concat(registers.get(aux[1]));//d
                                     auxInt = Integer.parseInt(aux[3]);
                                     labelIndex = String.format("%16s", Integer.toBinaryString(auxInt)).replace(' ', '0');
+                                    if (auxInt<0)
+                                        labelIndex = labelIndex.substring(15, 31); 
                                     instrution = instrution.concat(labelIndex);
                                 }
                                 break;
@@ -294,7 +302,9 @@ public class Montador {
                                 //formato: 01dc                                
                                 instrution = instrution.concat(registers.get(aux[1]));//d
                                 auxInt = Integer.parseInt(aux[2]);
-                                labelIndex = String.format("%16s", Integer.toBinaryString(auxInt)).replace(' ', '0');                                    
+                                labelIndex = String.format("%16s", Integer.toBinaryString(auxInt)).replace(' ', '0'); 
+                                if (auxInt<0)
+                                    labelIndex = labelIndex.substring(15, 31); 
                                 instrution = instrution.concat(labelIndex);                                
                                 break;
                             case "j":case "jal":
@@ -354,7 +364,7 @@ public class Montador {
                         }
                         if(!erroSintax){
                             //transformar instrução pra hexadecimal
-                            instrution = binToHexa(instrution);
+                            instrution = binToHexa(instrution);                            
                             gravarPseg.printf(instrution+"%n");
                             System.out.println(instrution+" - "+instrution.length()+"bits");
                         }
@@ -491,7 +501,8 @@ public class Montador {
             binarioDecimal += controle * Integer.parseInt(aux.charAt(i)+"");
             controle*=2;
         }  
-        aux = "0x"+String.format("%08x", binarioDecimal);
+        aux = "0x";
+        aux = aux.concat(String.format("%08x", binarioDecimal).toUpperCase());
         return aux; 
     }
 }
