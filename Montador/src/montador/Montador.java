@@ -190,9 +190,10 @@ public class Montador {
                 }
                 if(data){
                     auxInt = Integer.parseInt(aux[1]);
-                    String dataBin32 = String.format("%32s", Integer.toBinaryString(auxInt)).replace(' ', '0'); 
-                    System.out.println(dataBin32+" - "+dataBin32.length()+"bits");
-                    gravarData.printf(dataBin32+"%n");
+                    String dataHexa8 = "0x";
+                    dataHexa8 = dataHexa8.concat(String.format("%08x", auxInt)); 
+                    System.out.println(dataHexa8+" - "+dataHexa8.length()+"bits");
+                    gravarData.printf(dataHexa8+"%n");
                 }else{
                     if(line.contains(".data")){
                         System.out.println("Segmento de dados:");
