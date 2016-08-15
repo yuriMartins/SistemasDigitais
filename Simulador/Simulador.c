@@ -5,7 +5,7 @@
 #include <string.h>
 
 int maior_end_dados, maior_end_reg;
-
+int HI = 0, LO = 0;
 int banco_reg[32];
 int pc;
 int size_mem;
@@ -43,12 +43,12 @@ int main() {
 
     if (arq_inst == NULL)
     {
-        printf("Arquivo de entrada de dados não foi aberto!\n");
+        printf("Arquivo de entrada de instruções não foi aberto!\n");
         return EXIT_FAILURE;
     }
     else if (arq_data == NULL)
     {
-        printf("Arquivo de entrada de instruções não foi aberto!\n");
+       printf("Arquivo de entrada de dados não foi aberto!\n");
         return EXIT_FAILURE;
     }
     else
@@ -140,14 +140,14 @@ char get_tipo(int op){
 
 void decod_tipoR(int inst, int op){
     int rd = (inst >> 11) & 0x1f;
-
     int rs = (inst >> 21) & 0x1f;
     int rt = (inst >> 16) & 0x1f;
+    int sa = (inst>> 6) & 0x1f;
     int func = inst & 0x3F;
 
     int data_s = banco_reg[rs];
     int data_t = banco_reg[rt];
-
+    int data_a = banco_reg[sa];
 
     printf("%X\n", inst);
     printf("rd: %d rs: %d rt: %d func: %d \n", rd, rs, rt, func);
@@ -206,6 +206,163 @@ void decod_tipoR(int inst, int op){
             if(rd>maior_end_reg)
                 maior_end_reg = rd;
         break;
+        case 0b100110:
+            printf("Inst XNOR \n");
+            banco_reg[rd] = data_s ^ data_t;
+
+            if(rd>maior_end_reg)
+                maior_end_reg = rd;
+        break;
+         case 0b011010:
+            printf("Inst DIV \n");
+            LO = data_s/data_t;
+            HI = data_s%data_t;
+
+        break;
+        case 0b011011:
+            printf("Inst DIVU \n");
+
+           unsigned int q = data_s/data_t;
+           unsigned int r = data_s%data_t;
+           LO = q;
+           HI = r;
+        break;
+        case 0b011000:
+            printf("Inst MULT \n");
+
+           long int m = data_s * data_t;
+           long int aux = m;
+           LO = (aux>> 32)& 0xFFFFFFFFFFFFFFFF;
+           HI =  m & 0xFFFFFFFFFFFFFFFF;
+        break;
+        case 0b011001:
+            printf("Inst MULTU \n");
+
+           unsigned long int u = data_s * data_t;
+           unsigned long int aux1 = u;
+           LO = (aux>> 32)& 0xFFFFFFFFFFFFFFFF;
+           HI =  m & 0xFFFFFFFFFFFFFFFF;
+        break;
+         case 0b000000:
+            printf("Inst SLL \n");
+
+            banco_reg[rd] = data_t << data_a;
+
+            if(rd>maior_end_reg)
+                maior_end_reg = rd;
+
+        break;
+        case 0b000100:
+            printf("Inst SLLV \n");
+
+            banco_reg[rd] = data_s << data_t;
+
+            if(rd>maior_end_reg)
+                maior_end_reg = rd;
+
+        break;
+        case 0b000010:
+            printf("Inst SRL \n");
+
+            banco_reg[rd] = data_t >> data_a;
+
+            if(rd>maior_end_reg)
+                maior_end_reg = rd;
+        break;
+         case 0b000011:
+            printf("Inst SRA \n");
+
+            banco_reg[rd] = data_t >> data_a;
+
+            if(rd>maior_end_reg)
+                maior_end_reg = rd;
+        break;
+         case 0b000111:
+            printf("Inst SRAV \n");
+
+            banco_reg[rd] = data_t >> data_s;
+
+            if(rd>maior_end_reg)
+                maior_end_reg = rd;
+        break;
+        case 0b000110:
+            printf("Inst SRLV \n");
+
+            banco_reg[rd] = data_t >> data_s;
+
+            if(rd>maior_end_reg)
+                maior_end_reg = rd;
+        break;
+        case 0b101010:
+            printf("Inst SLT \n");
+             if (data_s < data_t)
+            banco_reg[rd] = 1;
+        else banco_reg[rd] = 0;
+
+            if(rd>maior_end_reg)
+                maior_end_reg = rd;
+        break;
+        case 0b101011:
+            printf("Inst SLTU \n");
+             unsigned int s = data_s;
+             unsigned int t = data_t;
+             if (s < t)
+            banco_reg[rd] = 1;
+        else banco_reg[rd] = 0;
+
+            if(rd>maior_end_reg)
+                maior_end_reg = rd;
+        break;
+        case 0b001011:
+            printf("Inst MOVN \n");
+             if ( data_t != 0)
+            banco_reg[rd] = data_s;
+
+
+            if(rd>maior_end_reg)
+                maior_end_reg = rd;
+        break;
+         case 0b001010:
+            printf("Inst MOVZ \n");
+             if ( data_t == 0)
+            banco_reg[rd] = data_s;
+
+
+            if(rd>maior_end_reg)
+                maior_end_reg = rd;
+            break;
+             case 0b010000:
+            printf("Inst MFHI \n");
+
+              banco_reg[rd] = HI;
+
+            if(rd>maior_end_reg)
+                maior_end_reg = rd;
+            break;
+             case 0b010010:
+            printf("Inst MFLO \n");
+
+              banco_reg[rd] = LO;
+
+            if(rd>maior_end_reg)
+                maior_end_reg = rd;
+            break;
+            case 0b010001:
+            printf("Inst MTHI \n");
+
+              HI = data_s;
+
+            if(rd>maior_end_reg)
+                maior_end_reg = rd;
+            break;
+            case 0b010011:
+            printf("Inst MTLO \n");
+
+              LO = data_s;
+
+            if(rd>maior_end_reg)
+                maior_end_reg = rd;
+            break;
 
 
 
