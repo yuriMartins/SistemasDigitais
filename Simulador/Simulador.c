@@ -12,6 +12,7 @@ int pc;
 int size_mem;
 int *mem;
 
+void imprime_arquivo(FILE **arq_out, int qtd_inst);
 int carregar(FILE **arq_data, FILE **arq_inst);
 int tipo(int op, int funct);
 
@@ -27,6 +28,7 @@ int main() {
     FILE *arq_inst;
     FILE *arq_data;
 
+
     int qtd_inst;
 
 
@@ -37,8 +39,11 @@ int main() {
     maior_end_dados = 0;
     maior_end_reg = 0;
 
-    arq_inst = fopen("Bubblesort_pseg.txt", "r");
-    arq_data = fopen("Bubblesort_data.txt", "r");
+    arq_inst = fopen("entrada.txt", "r");
+    arq_data = fopen("entrada.txt", "r");
+
+    FILE *arq_out;
+    arq_out = fopen("arq_out.txt", "w");
 
 
 
@@ -50,6 +55,10 @@ int main() {
     else if (arq_data == NULL)
     {
        printf("Arquivo de entrada de dados não foi aberto!\n");
+        return EXIT_FAILURE;
+    }else if (arq_out == NULL)
+    {
+       printf("Arquivo ARQ_OUT não foi criado !\n");
         return EXIT_FAILURE;
     }
     else
@@ -83,6 +92,25 @@ int main() {
         printf("\n\n----------------------------------------\n\n");
     system("PAUSE");
     }
+
+    imprime_arquivo(&arq_out, qtd_inst);
+    fclose (arq_data);
+    fclose (arq_inst);
+    fclose (arq_out);
+}
+
+void imprime_arquivo(FILE **arq_out, int qtd_inst){
+    int i;
+
+    fprintf(*arq_out, "BANCO DE REGISTRADOR FINAL\n\n");
+    for(i=0; i<32; i++){
+        fprintf(*arq_out, "%d:   %d\n", i, banco_reg[i]);
+    }
+
+    fprintf(*arq_out, "\n\n");
+    fprintf(*arq_out, "MEMORIA DE DADOS FINAL\n\n");
+    for(i=qtd_inst; i<maior_end_dados; i++)
+        fprintf(*arq_out, "%d:   %d\n", (i-qtd_inst), mem[i]);
 }
 
 int carregar(FILE **arq_data, FILE **arq_inst)
@@ -503,6 +531,7 @@ void decod_tipoI(int inst, int op){
 
             if(rt>maior_end_reg)
                 maior_end_reg = rt;
+
         break;
         case 0b000100:
             printf("Inst BEQ \n");
@@ -536,21 +565,29 @@ void decod_tipoI(int inst, int op){
              }
 
         break;
-         case 0b100000:
+
+        case 0b100000:
             printf("Inst LB\n");
-            end = mem[rs] + immd;
-
-
+            banco_reg[rt]  = (banco_reg[rs] + immd)&0xFF;
             if(rt>maior_end_reg)
-                maior_end_reg =rt;
+                maior_end_reg = rt;
+
+
         break;
+
+        case 0b100001:
+            printf("Inst LW\n");
+            banco_reg[rt]  = ((banco_reg[rs] + immd)>>16)&0xFFFF;
+            if(rt>maior_end_reg)
+                maior_end_reg = rt;
+        break;
+
         case 0b100011:
             printf("Inst LW\n");
             banco_reg[rt]  = banco_reg[rs] + immd;
-
-
             if(rt>maior_end_reg)
-                maior_end_reg =rt;
+                maior_end_reg = rt;
+
         break;
 
 
@@ -581,32 +618,32 @@ void decod_tipoRe(int inst,int op){
 
            long int u = data_s * data_t;
            long int aux = u;
-           LO = (aux>> 32)& 0xFFFFFFFFFFFFFFFF;
-           HI =  u & 0xFFFFFFFFFFFFFFFF;
+           LO = (aux>> 31)& 0xFFFFFFFF;
+           HI =  u & 0xFFFFFFFF;
         break;
         case 0b000001:
            printf("Inst MADDU\n");
 
            unsigned long int p = data_s * data_t;
            unsigned long int aux1 = p;
-           LO += (aux>> 32)& 0xFFFFFFFFFFFFFFFF;
-           HI +=  p & 0xFFFFFFFFFFFFFFFF;
+           LO += (aux>> 31)& 0xFFFFFFFF;
+           HI +=  p & 0xFFFFFFFF;
         break;
          case 0b000100:
            printf("Inst MSUB\n");
 
             long int t = data_s * data_t;
             long int aux2 = t;
-           LO -= (aux2>> 32)& 0xFFFFFFFFFFFFFFFF;
-           HI -=  t & 0xFFFFFFFFFFFFFFFF;
+           LO -= (aux2>> 31)& 0xFFFFFFFF;
+           HI -=  t & 0xFFFFFFFF;
         break;
         case 0b000101:
            printf("Inst MSUB\n");
 
             unsigned long int b = data_s * data_t;
             unsigned long int aux3 = b;
-           LO -= (aux3>> 32)& 0xFFFFFFFFFFFFFFFF;
-           HI -=  b & 0xFFFFFFFFFFFFFFFF;
+           LO -= (aux3>> 31)& 0xFFFFFFFF;
+           HI -=  b & 0xFFFFFFFF;
         break;
         case 0b000010:
            printf("Inst MUL\n");
@@ -618,12 +655,9 @@ void decod_tipoRe(int inst,int op){
 
 
         break;
-
-
-
-
-
     }
+
+
 
 }
 
