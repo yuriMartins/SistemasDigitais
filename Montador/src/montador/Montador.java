@@ -213,8 +213,8 @@ public class Montador {
                         
                         switch (aux[0]){
                             case "addi":case "addiu":case "addu":case "clz":case "clo":case "lui":case "sub":case "subu":
-                                case "seb":case "seh":case "div":case "divu":case "madd":case "maddu":case "msub":case "msubu":
-                                case "mul":case "mult":case "multu": 
+                                case "seb":case "seh":case "div":case "divu":case "mod":case "modu":case "madd":case "maddu":
+                                case "msub":case "msubu":case "mul":case "mult":case "multu": 
                                     //aritimeticas
                                 case "and":case "andi":case "nor":case "wsbh":case "or":case "ori":case "xor":case "xori":
                                     //logicas, exceto ins e ext
@@ -433,6 +433,8 @@ public class Montador {
         instrutions.put("seh", "01111100000x11000100000");
         instrutions.put("div", "000000x0000000000011010");
         instrutions.put("divu", "000000x0000000000011011");
+        instrutions.put("mod", "000000x00011011010");
+        instrutions.put("modu", "000000x00011011011");
         instrutions.put("madd", "011100x0000000000000000");
         instrutions.put("maddu", "011100x0000000000000001");
         instrutions.put("msub", "011100x0000000000000100");
